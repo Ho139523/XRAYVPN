@@ -3,6 +3,7 @@
 set -Eeuo pipefail
 
 STATE_DIR="$ROOT_DIR/state"
+. "$STATE_DIR/xui.env"
 
 . "$STATE_DIR/server.env"
 . "$STATE_DIR/secrets.env"
