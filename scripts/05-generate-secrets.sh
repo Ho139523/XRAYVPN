@@ -31,6 +31,18 @@ if [[ "${#PANEL_PASSWORD}" -lt 32 ]]; then
     exit 1
 fi
 
+echo "Applying credentials to the panel..."
+
+# A fresh 3X-UI container still has its default admin login; without this the
+# generated credentials would never match and API login would fail.
+if ! docker exec "$XUI_CONTAINER_NAME" /app/x-ui setting \
+    -username "$PANEL_USERNAME" \
+    -password "$PANEL_PASSWORD" >/dev/null
+then
+    echo "ERROR: failed to set panel credentials."
+    exit 1
+fi
+
 echo "Generating client UUID..."
 
 CLIENT_UUID="$(cat /proc/sys/kernel/random/uuid)"
@@ -88,14 +100,14 @@ X25519_OUTPUT="$(
 
 PRIVATE_KEY="$(
     printf '%s\n' "$X25519_OUTPUT" |
-    sed -n 's/^[[:space:]]*Private key:[[:space:]]*//p' |
+    sed -n -E 's/^[[:space:]]*(Private key|PrivateKey):[[:space:]]*//p' |
     head -n 1 |
     tr -d '\r'
 )"
 
 PUBLIC_KEY="$(
     printf '%s\n' "$X25519_OUTPUT" |
-    sed -n 's/^[[:space:]]*Public key:[[:space:]]*//p' |
+    sed -n -E 's/^[[:space:]]*(Public key|PublicKey|Password \(PublicKey\)):[[:space:]]*//p' |
     head -n 1 |
     tr -d '\r'
 )"

@@ -9,6 +9,8 @@ STATE_DIR="$ROOT_DIR/state"
 . "$STATE_DIR/secrets.env"
 . "$STATE_DIR/inbound.env"
 
+. "$ROOT_DIR/scripts/lib/xui-auth.sh"
+
 if [[ -f "$ROOT_DIR/config/.env" ]]; then
     . "$ROOT_DIR/config/.env"
 fi
@@ -20,11 +22,9 @@ CLIENT_COMMENT="${CLIENT_COMMENT:-my-phone}"
 CLIENT_LIMIT_IP="${CLIENT_LIMIT_IP:-2}"
 CLIENT_FLOW="${CLIENT_FLOW:-xtls-rprx-vision}"
 
-COOKIE_JAR="$STATE_DIR/.xui-cookie"
-
 echo "=== CREATE CLIENT ==="
 
-if [[ ! -f "$COOKIE_JAR" ]]; then
+if [[ ! -f "$XUI_COOKIE_JAR" ]]; then
     echo "ERROR: XUI session cookie not found."
     exit 1
 fi
@@ -60,23 +60,45 @@ payload = {
 
 with open(output, "w") as f:
     json.dump(payload, f, separators=(",", ":"))
+
+# 3X-UI 3.x manages clients through /panel/api/clients/add
+with open(output.replace(".json", "-v3.json"), "w") as f:
+    json.dump({
+        "client": settings["clients"][0],
+        "inboundIds": [inbound_id]
+    }, f, separators=(",", ":"))
 PY
 
 echo
 echo "Adding client to inbound ${INBOUND_ID}..."
 
-RESPONSE="$(
-    curl \
-        --fail \
-        --silent \
-        --show-error \
-        --max-time 15 \
-        -b "$COOKIE_JAR" \
-        -H 'Content-Type: application/json' \
-        -X POST \
-        "http://127.0.0.1:${XUI_PANEL_PORT}/panel/api/inbounds/addClient" \
-        --data-binary "@$STATE_DIR/add-client-payload.json"
-)"
+post_client() {
+    local path="$1" payload="$2"
+
+    HTTP_CODE="$(
+        curl \
+            --silent \
+            --show-error \
+            --max-time 15 \
+            --output "$STATE_DIR/.client-response" \
+            --write-out '%{http_code}' \
+            -b "$XUI_COOKIE_JAR" \
+            -H "X-CSRF-Token: $(xui_csrf)" \
+            -H 'Content-Type: application/json' \
+            -X POST \
+            "http://127.0.0.1:${XUI_PANEL_PORT}${path}" \
+            --data-binary "@$payload"
+    )"
+
+    RESPONSE="$(cat "$STATE_DIR/.client-response")"
+    rm -f "$STATE_DIR/.client-response"
+}
+
+post_client /panel/api/clients/add "$STATE_DIR/add-client-payload-v3.json"
+
+if [[ "$HTTP_CODE" == "404" ]]; then
+    post_client /panel/api/inbounds/addClient "$STATE_DIR/add-client-payload.json"
+fi
 
 echo
 echo "API response:"

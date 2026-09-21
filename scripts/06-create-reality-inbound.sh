@@ -21,40 +21,16 @@ REALITY_FINGERPRINT="${REALITY_FINGERPRINT:-chrome}"
 REALITY_SPIDERX="${REALITY_SPIDERX:-/}"
 REALITY_REMARK="${REALITY_REMARK:-Finance}"
 
-COOKIE_JAR="$STATE_DIR/.xui-cookie"
-
-rm -f "$COOKIE_JAR"
+. "$ROOT_DIR/scripts/lib/xui-auth.sh"
 
 echo "=== CREATE REALITY INBOUND ==="
 
 echo
 echo "Checking panel login..."
 
-LOGIN_RESPONSE="$(
-    curl \
-        --fail \
-        --silent \
-        --show-error \
-        --max-time 10 \
-        -c "$COOKIE_JAR" \
-        -b "$COOKIE_JAR" \
-        -H 'Content-Type: application/json' \
-        -X POST \
-        "http://127.0.0.1:${XUI_PANEL_PORT}/login" \
-        --data "$(python3 - <<PY
-import json
-print(json.dumps({
-    "username": "$PANEL_USERNAME",
-    "password": "$PANEL_PASSWORD"
-}))
-PY
-)"
-)"
-
-if ! printf '%s' "$LOGIN_RESPONSE" | grep -q '"success":true'; then
+if ! xui_login "$XUI_PANEL_PORT" "$PANEL_USERNAME" "$PANEL_PASSWORD"; then
     echo
     echo "ERROR: 3X-UI login failed."
-    echo "$LOGIN_RESPONSE"
     exit 1
 fi
 
@@ -116,7 +92,10 @@ payload = {
         }
     },
     "sniffing": {
-        "enabled": False
+        "enabled": True,
+        "destOverride": ["http", "tls", "quic"],
+        "metadataOnly": False,
+        "routeOnly": True
     }
 }
 
@@ -133,7 +112,8 @@ RESPONSE="$(
         --silent \
         --show-error \
         --max-time 15 \
-        -b "$COOKIE_JAR" \
+        -b "$XUI_COOKIE_JAR" \
+        -H "X-CSRF-Token: $(xui_csrf)" \
         -H 'Content-Type: application/json' \
         -X POST \
         "http://127.0.0.1:${XUI_PANEL_PORT}/panel/api/inbounds/add" \

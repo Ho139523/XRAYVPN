@@ -4,17 +4,50 @@ set -Eeuo pipefail
 
 echo "=== DOCKER INSTALLATION ==="
 
+# Fresh servers may still be running their first unattended upgrade (apt lock)
+# and Ubuntu's needrestart would otherwise stop to ask questions.
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=a
+APT=(apt-get -o DPkg::Lock::Timeout=600 -y -qq)
+
+start_docker() {
+    if [[ -d /run/systemd/system ]]; then
+        systemctl enable docker >/dev/null 2>&1 || true
+        systemctl start docker
+    fi
+
+    for _ in $(seq 1 30); do
+        if docker info >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 1
+    done
+
+    echo "ERROR: the Docker daemon is not running."
+    exit 1
+}
+
 if command -v docker >/dev/null 2>&1; then
     echo "Docker already installed."
 
     docker --version
 
-    if docker compose version >/dev/null 2>&1; then
-        echo "Docker Compose plugin already installed."
-    else
-        echo "ERROR: Docker Compose plugin is missing."
-        exit 1
+    if ! docker compose version >/dev/null 2>&1; then
+        echo "Docker Compose plugin is missing; installing it..."
+
+        "${APT[@]}" update
+        "${APT[@]}" install docker-compose-plugin ||
+            "${APT[@]}" install docker-compose-v2 || true
+
+        if ! docker compose version >/dev/null 2>&1; then
+            echo "ERROR: Docker Compose plugin is missing and could not be installed."
+            exit 1
+        fi
     fi
+
+    echo "Docker Compose plugin present."
+
+    start_docker
 
     exit 0
 fi
@@ -27,9 +60,9 @@ case "${ID:-}" in
 
         echo "Installing Docker using official Docker repository..."
 
-        apt-get update
+        "${APT[@]}" update
 
-        apt-get install -y \
+        "${APT[@]}" install \
             ca-certificates \
             curl \
             gnupg
@@ -65,17 +98,16 @@ case "${ID:-}" in
 deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/${ID} ${CODENAME} stable
 REPO
 
-        apt-get update
+        "${APT[@]}" update
 
-        apt-get install -y \
+        "${APT[@]}" install \
             docker-ce \
             docker-ce-cli \
             containerd.io \
             docker-buildx-plugin \
             docker-compose-plugin
 
-        systemctl enable docker
-        systemctl start docker
+        start_docker
 
         ;;
 

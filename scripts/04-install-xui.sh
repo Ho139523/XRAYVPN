@@ -10,8 +10,17 @@ if [[ -f "$ROOT_DIR/config/.env" ]]; then
     . "$ROOT_DIR/config/.env"
 fi
 
-XUI_VERSION="${XUI_VERSION:-latest}"
-XUI_IMAGE="${XUI_IMAGE:-ghcr.io/mhsanaei/3x-ui:${XUI_VERSION}}"
+# 3X-UI changes its API between releases (login CSRF, client endpoints...),
+# so the release this installer was tested with (3X-UI 3.8.5 / Xray 26.9.9) is
+# pinned by digest. Set XUI_VERSION=latest, or XUI_IMAGE, in config/.env to
+# use something else.
+XUI_TESTED_IMAGE="ghcr.io/mhsanaei/3x-ui:3.8.5@sha256:e0f90c10902e0e74f947d5a9efe017b273804477430233bbfc4918542ffe366c"
+
+if [[ -n "${XUI_VERSION:-}" ]]; then
+    XUI_IMAGE="${XUI_IMAGE:-ghcr.io/mhsanaei/3x-ui:${XUI_VERSION}}"
+else
+    XUI_IMAGE="${XUI_IMAGE:-$XUI_TESTED_IMAGE}"
+fi
 
 XUI_CONTAINER_NAME="${XUI_CONTAINER_NAME:-3xui_app}"
 XUI_DATA_DIR="${XUI_DATA_DIR:-/opt/vpn-appliance/data}"

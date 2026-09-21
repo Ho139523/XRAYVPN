@@ -21,6 +21,15 @@ cat > "$STATE_DIR/client-vless.txt" <<EOF_LINK
 $VLESS_LINK
 EOF_LINK
 
+POLICY_GATE_ENABLED="${POLICY_GATE_ENABLED:-true}"
+GATE_URLS=""
+
+if [[ "$POLICY_GATE_ENABLED" == "true" ]]; then
+    GATE_URLS="$(python3 "$ROOT_DIR/policy/vpn_policy.py" urls "$CLIENT_EMAIL")"
+    printf '%s\n' "$GATE_URLS" > "$STATE_DIR/gate-urls.txt"
+    chmod 600 "$STATE_DIR/gate-urls.txt"
+fi
+
 cat > "$STATE_DIR/admin-access.txt" <<EOF_ADMIN
 3X-UI Panel
 URL: http://${SERVER_PUBLIC_IP}:${XUI_PANEL_PORT}
@@ -59,6 +68,29 @@ echo
 echo "Password:"
 echo "  $PANEL_PASSWORD"
 echo
+if [[ -n "$GATE_URLS" ]]; then
+    echo "------------------------------------------------------------"
+    echo "GPS ZONES (phone automation URLs, work only through the VPN)"
+    echo "------------------------------------------------------------"
+    echo
+    printf '%s\n' "$GATE_URLS"
+    echo
+    echo "Parent page (VPN connected):"
+    echo "  http://${POLICY_GATE_VIRTUAL_IP:-192.0.2.1}:${POLICY_GATE_PORT:-9099}/admin"
+    echo
+    echo "Parent logins (one per VPN user; each parent can change their own):"
+
+    if [[ -s "$STATE_DIR/parent-credentials.txt" ]]; then
+        awk -F'\t' '{ printf "  user %-16s login: %-22s password: %s\n", $1, $2, $3 }' \
+            "$STATE_DIR/parent-credentials.txt"
+    fi
+
+    echo "  (also in $STATE_DIR/parent-credentials.txt)"
+    echo
+    echo "Setup guide: docs/content-policy.md"
+    echo
+fi
+
 echo "------------------------------------------------------------"
 echo "FILES"
 echo "------------------------------------------------------------"
@@ -68,6 +100,9 @@ echo "  $STATE_DIR/client-vless.txt"
 echo
 echo "Panel credentials:"
 echo "  $STATE_DIR/admin-access.txt"
+echo
+echo "Zone URLs:"
+echo "  $STATE_DIR/gate-urls.txt"
 echo
 echo "============================================================"
 echo

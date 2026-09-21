@@ -16,7 +16,7 @@ fi
 
 XUI_PANEL_PORT="${XUI_PANEL_PORT:-2053}"
 
-COOKIE_JAR="$STATE_DIR/.xui-cookie"
+COOKIE_JAR="$STATE_DIR/.xui-cookie"  # written by scripts/lib/xui-auth.sh
 
 echo "=== HEALTH CHECK ==="
 
@@ -106,6 +106,14 @@ then
 else
     echo "WARNING: Reality target could not be checked."
     echo "This does not necessarily mean the Reality inbound is broken."
+fi
+
+echo
+echo "7. Content policy"
+
+if ! python3 "$ROOT_DIR/policy/vpn_policy.py" verify; then
+    echo "ERROR: content policy verification failed."
+    exit 1
 fi
 
 echo
