@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fp_app_label">پنل والد</string>
+    <string name="fp_reload">بارگذاری مجدد</string>
+    <string name="fp_settings">تنظیمات</string>
+    <string name="fp_save">ذخیره</string>
+    <string name="fp_cancel">انصراف</string>
+    <string name="fp_link_label">لینک راه‌اندازی (از صفحه‌ی والد، بخش «راه‌اندازی گوشی» کپی کنید)</string>
+    <string name="fp_port_label">پورت پروکسی محلی برنامه‌ی VPN (پیش‌فرض ۱۰۸۰۸)</string>
+    <string name="fp_report">موقعیت من را به فیلتر خانواده گزارش کن</string>
+    <string name="fp_interval_label">حداکثر هر (دقیقه)</string>
+    <string name="fp_bad_link">این یک لینک راه‌اندازی نیست.</string>
+    <string name="fp_bad_port">پورت باید بین ۱ تا ۶۵۵۳۵ باشد.</string>
+    <string name="fp_no_link">تنظیمات را باز کنید و لینک راه‌اندازی را از صفحه‌ی والد بچسبانید.</string>
+    <string name="fp_error_title">به پنل والد دسترسی نیست</string>
+    <string name="fp_error_body">اول VPN را وصل کنید و بعد «بارگذاری مجدد» را بزنید. پورت پروکسی محلی را هم در تنظیمات بررسی کنید.</string>
+    <string name="fp_permission_denied">برای گزارش موقعیت، اجازه‌ی دسترسی به مکان لازم است.</string>
+    <string name="fp_notification_title">فیلتر خانواده</string>
+    <string name="fp_notification_text">در حال گزارش موقعیت به فیلتر خانواده</string>
+    <string name="fp_last_report">آخرین گزارش: %1$s</string>
+    <string name="fp_never">هرگز</string>
+</resources>

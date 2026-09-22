@@ -1,0 +1,78 @@
+# Builds the Family VPN Android app: the v2rayNG client plus the parent-panel
+# module from android/. Run it from the Actions tab ("Run workflow"); the APK
+# is attached to the run as an artifact.
+#
+# BEST EFFORT: v2rayNG's own build steps (native tun2socks, Xray core, JDK,
+# NDK) change between releases and were not inspected when this was written.
+# If a step fails, its log names what upstream needs; adjust the matching input
+# or step here. See android/README.md.
+name: Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: "v2rayNG tag or branch to build on"
+        default: "master"
+      java_version:
+        description: "JDK version (v2rayNG has used 17 and 21)"
+        default: "17"
+      ndk_version:
+        description: "Android NDK to install for the native tun2socks build"
+        default: "27.2.12479018"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Family filter sources
+        uses: actions/checkout@v4
+
+      - name: v2rayNG sources
+        uses: actions/checkout@v4
+        with:
+          repository: 2dust/v2rayNG
+          ref: ${{ inputs.upstream_ref }}
+          path: upstream
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ inputs.java_version }}
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Android NDK
+        run: |
+          sdkmanager --install "ndk;${{ inputs.ndk_version }}"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${{ inputs.ndk_version }}" >> "$GITHUB_ENV"
+
+      - name: Native libraries and Xray core (what upstream's own build does)
+        working-directory: upstream
+        run: |
+          set -x
+          if [ -f compile-hevtun.sh ]; then bash compile-hevtun.sh; fi
+          app_libs="$(dirname "$(find . -path '*/app/build.gradle*' -not -path './.git/*' | head -n 1)")/libs"
+          mkdir -p "$app_libs"
+          if ! ls "$app_libs"/libv2ray*.aar >/dev/null 2>&1; then
+            curl -fL https://github.com/2dust/AndroidLibXrayLite/releases/latest/download/libv2ray.aar \
+              -o "$app_libs/libv2ray.aar"
+          fi
+
+      - name: Add the Family filter module
+        run: python3 android/apply-overlay.py upstream
+
+      - name: Build the APK
+        run: |
+          gradle_root="$(dirname "$(find upstream -name gradlew -not -path '*/.git/*' | head -n 1)")"
+          cd "$gradle_root"
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: family-vpn-apk
+          path: upstream/**/build/outputs/apk/**/*.apk
+          if-no-files-found: error

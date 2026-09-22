@@ -44,6 +44,13 @@ change it or put it behind a firewall if you do not need it.
 If a run fails the message says which step. Fix the cause and run it again. If it
 stopped after the panel container was created, `sudo ./uninstall.sh` starts clean.
 
+## Android app
+
+`android/` builds an Android app that is a v2ray client (for the child) with a
+**Parent panel** icon (for the parent) and optional automatic location reports.
+GitHub Actions builds the APK. See [android/README.md](android/README.md), which
+also says what has and has not been tested.
+
 ## Moving to another server
 
 A new server has a new address and new Reality keys, so VPN users import a new
@@ -77,6 +84,7 @@ python3 -m unittest discover -s tests         # run the tests
 | --- | --- |
 | `install.sh`, `scripts/` | the installer, one script per step |
 | `policy/` | content policy: Xray rules, parent web page, location gate |
+| `android/` | the Android app: overlay module and build script |
 | `config/appliance.env.example` | every setting, with defaults |
 | `state/` | generated secrets and data (git-ignored) |
 | `backup.sh`, `uninstall.sh` | move or remove a server |

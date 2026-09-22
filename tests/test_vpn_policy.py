@@ -630,7 +630,9 @@ class Client:
         self.port, self.cookies = port, {}
 
     def request(self, method, path, form=None, headers=None):
-        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=5)
+        # Each login does a 200,000-iteration PBKDF2 hash by design (ParentStore);
+        # normally milliseconds, but a loaded CI/host box can be much slower.
+        conn = http.client.HTTPConnection("127.0.0.1", self.port, timeout=30)
         body = urllib.parse.urlencode(form, doseq=True) if form is not None else None
         head = dict(headers or {})
         if self.cookies:
@@ -888,6 +890,7 @@ class Gate(Sandbox):
         page = client.get("/admin")[1]
         self.assertIn(vp.gate_base(cfg(), "Us") + "/home/enter", page)
         self.assertIn(vp.gate_base(cfg(), "Us") + "/locate?lat=LAT", page)
+        self.assertIn('data-copy="%s"' % vp.gate_base(cfg(), "Us"), page)  # the link the Android app takes
         self.assertNotIn(vp.gate_token("Kid"), page)
 
     def test_static_files(self):

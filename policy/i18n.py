@@ -61,6 +61,7 @@ EN = {
     "sec_phone": "Phone setup",
     "phone_hint": "The phone must report where it is. These addresses only work while the VPN is on, "
                   "and belong to this user only.",
+    "phone_app": "App setup link (paste it into the Family VPN app)",
     "phone_locate": "Report position (replace LAT and LON with the phone's current location)",
     "phone_enter": "Arrived at {zone}",
     "phone_exit": "Left {zone}",
@@ -168,6 +169,7 @@ FA = {
     "sec_phone": "راه‌اندازی گوشی",
     "phone_hint": "گوشی باید موقعیت خودش را به سرور گزارش کند. این آدرس‌ها فقط وقتی VPN روشن است کار می‌کنند "
                   "و مخصوص همین کاربر هستند.",
+    "phone_app": "لینک راه‌اندازی اپ (آن را در اپ Family VPN وارد کنید)",
     "phone_locate": "گزارش موقعیت (به‌جای LAT و LON مختصات فعلی گوشی را بگذارید)",
     "phone_enter": "رسیدن به {zone}",
     "phone_exit": "خروج از {zone}",

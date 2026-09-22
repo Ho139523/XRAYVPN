@@ -106,6 +106,9 @@ the request goes nowhere (`192.0.2.0/24` is reserved) but, being plain HTTP, it
 could be seen on the local network. To rotate every token delete
 `state/gate.secret`.
 
+**The Android app does this for you:** `android/` builds a v2ray client that can
+report position by itself. Paste the *App setup link* from this section into it.
+
 **Report position (recommended):** `.../locate?lat=LAT&lon=LON`. The server
 compares it with the user's places and enters/leaves them, so the phone needs
 no knowledge of the places:

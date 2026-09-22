@@ -381,7 +381,7 @@ def render_panel(ctx):
          "rows": "".join(prow) or '<li class="empty">%s</li>' % e(tr("empty_places"))}
 
     # ---- phone
-    urls = [(tr("phone_locate"), ctx["base"] + "/locate?lat=LAT&lon=LON")]
+    urls = [(tr("phone_app"), ctx["base"]), (tr("phone_locate"), ctx["base"] + "/locate?lat=LAT&lon=LON")]
     for z in zones:
         urls.append((tr("phone_enter", zone=z["name"]), "%s/%s/enter" % (ctx["base"], z["id"])))
         urls.append((tr("phone_exit", zone=z["name"]), "%s/%s/exit" % (ctx["base"], z["id"])))
